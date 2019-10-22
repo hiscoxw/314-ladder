@@ -27,30 +27,31 @@ function exit_on_failure($test, $msg)
 if($request->isGet())
 {
    //TODO implement Get
-   $results = array("error_text" => "Get not yet implemented!");
+   $results = array("resource" => "player", "method" => "get", "request_vars" => $vars);//XXX
 }
 
 //create
 elseif($request->isPost())
 {
    //TODO implement Post
-   $results = array("error_text" => "Post not yet implemented!");
+   $results = array("resource" => "player", "method" => "post", "request_vars" => $vars);//XXX
+
 }
 
 //delete
 elseif($request->isDelete())
 {
    //TODO implement Delete
-   $results = array("error_text" => "Delete not yet implemented!");
+   $results = array("resource" => "player", "method" => "delete", "request_vars" => $vars);//XXX
 }
 
 //update
 elseif($request->isPut())
 {
    //TODO implement Put
-   $results = array("error_text" => "Put not yet implemented!");
+   $results = array("resource" => "player", "method" => "put", "request_vars" => $vars);//XXX
 }
 
-
+*/
 echo(json_encode($results));
 ?>
