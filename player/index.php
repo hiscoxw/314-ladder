@@ -7,10 +7,10 @@ $request = new RestRequest();
 
 //get the request variables
 $vars = $request->getRequestVariables();
-$type = $request->getRequestType();//XXX
-$resource = "player";
 
 //connect to the database
+//$db = new PDO("pgsql:dbname=ladder host=localhost password=314dev user=dev");
+//XXX uncomment above and comment out below for dev environment
 $db = new PDO("pgsql:dbname=ladder host=localhost password=1392922 user=whiscox09");
 $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
@@ -25,14 +25,36 @@ function exit_on_failure($test, $msg)
    }
 }
 
-$results = array("resource" => $resource, "method" => $type, "request_vars" => $vars);//XXX
 
-/*
+function execute_sql_query($sql, $args, $db)
+{
+   $statement = $db->prepare($sql);
+   $statement->execute((array)$args);
+   $returnvalue = $statement->fetchAll(PDO::FETCH_ASSOC);
+
+   return $returnvalue;
+}
+
+//TODO finish function
+function player_exists($username, $db)
+{
+   return true;
+}
+
+
 //view
 if($request->isGet())
 {
-   //TODO implement Get
+   $username = $vars["username"];
+   
+   //make sure the player exists
+   exit_on_failure(player_exists($username, $db), "THE REQUESTED PLAYER DOES NOT EXIST!");
+   
+   //create the query
+   $sql = "select * from player where username = ?;";
 
+   //get the results
+   $results = execute_sql_query($sql, [$username], $db);
 }
 
 //create
@@ -54,6 +76,5 @@ elseif($request->isPut())
    //TODO implement Put
 }
 
-*/
 echo(json_encode($results));
 ?>
