@@ -10,7 +10,7 @@ $vars = $request->getRequestVariables();
 $type = $request->getRequestType();
 
 //connect to the database
-$db = new PDO("pgsql:dbname=ladder host=localhost password=314dev user=dev");
+$db = new PDO("pgsql:dbname=ladder host=localhost password=1392922 user=whiscox09");
 $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
 
