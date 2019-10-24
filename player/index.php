@@ -24,7 +24,7 @@ function exit_on_failure($test, $msg)
    }
 }
 
-$results = array("resource" => "player", "method" => "get", "request_vars" => $vars);//XXX
+$results = array("resource" => "player", "method" => $type, "request_vars" => $vars);//XXX
 
 /*
 //view
