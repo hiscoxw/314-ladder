@@ -7,7 +7,8 @@ $request = new RestRequest();
 
 //get the request variables
 $vars = $request->getRequestVariables();
-$type = $request->getRequestType();
+$type = $request->getRequestType();//XXX
+$resource = "player";
 
 //connect to the database
 $db = new PDO("pgsql:dbname=ladder host=localhost password=1392922 user=whiscox09");
@@ -24,7 +25,7 @@ function exit_on_failure($test, $msg)
    }
 }
 
-$results = array("resource" => "player", "method" => $type, "request_vars" => $vars);//XXX
+$results = array("resource" => $resource, "method" => $type, "request_vars" => $vars);//XXX
 
 /*
 //view
