@@ -48,7 +48,7 @@ if($request->isGet())
    $username = $vars["username"];
    
    //make sure the player exists
-   exit_on_failure(player_exists($username, $db), "THE REQUESTED PLAYER DOES NOT EXIST!");
+//XXX   exit_on_failure(player_exists($username, $db), "THE REQUESTED PLAYER DOES NOT EXIST!");
    
    //create the query
    $sql = "select * from player where username = ?;";
