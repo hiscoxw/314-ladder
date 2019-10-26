@@ -9,9 +9,9 @@ $request = new RestRequest();
 $vars = $request->getRequestVariables();
 
 //connect to the database
-//$db = new PDO("pgsql:dbname=ladder host=localhost password=314dev user=dev");
+$db = new PDO("pgsql:dbname=ladder host=localhost password=314dev user=dev");
 //XXX uncomment above and comment out below for dev environment
-$db = new PDO("pgsql:dbname=wh_ladder host=localhost password=1392922 user=whiscox09");
+//$db = new PDO("pgsql:dbname=wh_ladder host=localhost password=1392922 user=whiscox09");
 $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
 
@@ -48,14 +48,14 @@ if($request->isGet())
    $username = $vars["username"];
    
    //make sure the player exists
-//XXX   exit_on_failure(player_exists($username, $db), "THE REQUESTED PLAYER DOES NOT EXIST!");
+   exit_on_failure(player_exists($username, $db), "THE REQUESTED PLAYER DOES NOT EXIST!");
    
    //create the query
-   $sql = "SELECT name, username, phone, email, rank
+   $sql = "SELECT name, username, phone, email, rank,
       (
       SELECT CAST(COUNT(m.winner) AS FLOAT) AS wins
-         FROM player AS p1 FULL OUTER JOIN match_view AS m ON p1.username = m.winner
-         WHERE p.username = p1.username
+      FROM player AS p1 FULL OUTER JOIN match_view AS m ON p1.username = m.winner
+      WHERE p.username = p1.username
       )
       /
       (
