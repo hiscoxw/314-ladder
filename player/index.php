@@ -9,9 +9,9 @@ $request = new RestRequest();
 $vars = $request->getRequestVariables();
 
 //connect to the database
-//$db = new PDO("pgsql:dbname=ladder host=localhost password=314dev user=dev");
+$db = new PDO("pgsql:dbname=ladder host=localhost password=314dev user=dev");
 //XXX uncomment above and comment out below for dev environment
-$db = new PDO("pgsql:dbname=wh_ladder host=localhost password=1392922 user=whiscox09");
+//$db = new PDO("pgsql:dbname=wh_ladder host=localhost password=1392922 user=whiscox09");
 $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
 
@@ -21,10 +21,24 @@ function exit_on_failure($test, $msg)
    {
       $results["error_text"] = $msg;
       echo(json_encode($results));
+      http_response_code (400);
       exit();
    }
 }
 
+function vars_is_set($variables, $vars)
+{
+   $set = true;
+   foreach($variables as $variable)
+   {
+      if (!isset($vars[$variable]))
+      {
+         $set = false;
+      }
+   }
+
+   return $set;
+}
 
 function execute_sql_query($sql, $args, $db)
 {
@@ -35,21 +49,35 @@ function execute_sql_query($sql, $args, $db)
    return $returnvalue;
 }
 
-//TODO finish function
 function player_exists($username, $db)
 {
-   return true;
+   $sql = "SELECT EXISTS(SELECT * FROM player WHERE username = ?);";
+   $exists = execute_sql_query($sql, [$username], $db)[0]["exists"];
+
+   return $exists == 1;
 }
 
+function generate_new_rank($db)
+{
+   $sql = "SELECT MAX(rank) FROM player;";
+   $max = execute_sql_query($sql, [], $db)[0]["max"];
+
+   return $max + 1;
+}
 
 //view
 if($request->isGet())
 {
-   $username = $vars["username"];
    
+   //make sure username is set
+   exit_on_failure(vars_is_set(["username"], $vars), "THE USERNAME IS MISSING!");   
+
+   //get the username from vars
+   $username = $vars["username"];
+
    //make sure the player exists
    exit_on_failure(player_exists($username, $db), "THE REQUESTED PLAYER DOES NOT EXIST!");
-   
+
    //create the queries
    $sql = "SELECT name, username, phone, email, rank,
       (
@@ -92,13 +120,27 @@ if($request->isGet())
    $results["winning_margin"] = execute_sql_query($sql2, [$username], $db)[0]["winning_margin"];
    $results["losing_margin"] = execute_sql_query($sql3, [$username], $db)[0]["losing_margin"];
 
+   http_response_code (200);
 }
 
 //create
 elseif($request->isPost())
 {
-   //TODO implement Post
+   //Make sure all the variables are set
+   exit_on_failure(vars_is_set(["name", "email", "phone", "username", "password"], $vars), "ONE OR MORE REQUIRED VARIABLES ARE MISSING!");
 
+   //Get required variables
+   $name = $vars["name"];
+   $email = $vars["email"];
+   $phone = $vars["phone"];
+   $username = $vars["username"];
+   $password = $vars["password"];
+
+   //assign a rank
+   $rank = generate_new_rank($db);
+
+   //generate and run sql query to add new player
+   $sql = "INSERT INTO player VALUES
 }
 
 //delete
