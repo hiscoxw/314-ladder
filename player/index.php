@@ -51,10 +51,10 @@ if($request->isGet())
 //XXX   exit_on_failure(player_exists($username, $db), "THE REQUESTED PLAYER DOES NOT EXIST!");
    
    //create the query
-   $sql = "select * from player where username = ?;";
+   $sql = "select name, username, phone, email, rank from player where username = ?;";
 
    //get the results
-   $results = execute_sql_query($sql, [$username], $db);
+   $results = execute_sql_query($sql, [$username], $db)[0];
 }
 
 //create
