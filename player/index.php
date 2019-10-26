@@ -51,7 +51,20 @@ if($request->isGet())
 //XXX   exit_on_failure(player_exists($username, $db), "THE REQUESTED PLAYER DOES NOT EXIST!");
    
    //create the query
-   $sql = "select name, username, phone, email, rank from player where username = ?;";
+   $sql = "SELECT name, username, phone, email, rank
+      (
+      SELECT CAST(COUNT(m.winner) AS FLOAT) AS wins
+         FROM player AS p1 FULL OUTER JOIN match_view AS m ON p1.username = m.winner
+         WHERE p.username = p1.username
+      )
+      /
+      (
+      SELECT CAST(COUNT(p2.username) AS FLOAT) AS total_matches
+      FROM player AS p2, match_view as m
+      WHERE p.username = p2.username AND (p2.username = m.winner OR p2.username = m.loser)
+      GROUP BY p2.username
+      ) AS match_win_percentage
+      FROM player AS p WHERE username = ?;";
 
    //get the results
    $results = execute_sql_query($sql, [$username], $db)[0];
