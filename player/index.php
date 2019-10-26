@@ -50,7 +50,7 @@ if($request->isGet())
    //make sure the player exists
    exit_on_failure(player_exists($username, $db), "THE REQUESTED PLAYER DOES NOT EXIST!");
    
-   //create the query
+   //create the queries
    $sql = "SELECT name, username, phone, email, rank,
       (
          SELECT CAST(COUNT(m.winner) AS FLOAT) AS wins
@@ -71,14 +71,27 @@ if($request->isGet())
       )
       /
       (
-         SELECT CAST(COUNT(g.played) AS FLOAt(2)) AS games_played
+         SELECT CAST(COUNT(g.played) AS FLOAT(2)) AS games_played
             FROM game as g
             WHERE p.username = g.loser OR p.username = g.winner
       ) AS game_win_percentage
       FROM player AS p WHERE username = ?;";
+      
+   $sql2 = "SELECT CAST(AVG(g.winner_score - g.loser_score) AS FLOAT(2)) AS winning_margin
+               FROM player as p, game as g
+               WHERE g.winner = ?;";
+         
+   $sql3 = "SELECT CAST(AVG(g.winner_score - g.loser_score) AS FLOAT(2)) AS losing_margin
+               FROM player AS p, game AS g
+               WHERE g.loser = ?
+               GROUP BY g.loser;";
+
 
    //get the results
    $results = execute_sql_query($sql, [$username], $db)[0];
+   $results["winning_margin"] = execute_sql_query($sql2, [$username], $db)[0]["winning_margin"];
+   $results["losing_margin"] = execute_sql_query($sql3, [$username], $db)[0]["losing_margin"];
+
 }
 
 //create
