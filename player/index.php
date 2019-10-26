@@ -77,11 +77,11 @@ if($request->isGet())
       ) AS game_win_percentage
       FROM player AS p WHERE username = ?;";
       
-   $sql2 = "SELECT CAST(AVG(g.winner_score - g.loser_score) AS FLOAT(2)) AS winning_margin
+   $sql2 = "SELECT AVG(g.winner_score - g.loser_score) AS winning_margin
                FROM player as p, game as g
                WHERE g.winner = ?;";
          
-   $sql3 = "SELECT CAST(AVG(g.winner_score - g.loser_score) AS FLOAT(2)) AS losing_margin
+   $sql3 = "SELECT AVG(g.winner_score - g.loser_score) AS losing_margin
                FROM player AS p, game AS g
                WHERE g.loser = ?
                GROUP BY g.loser;";
