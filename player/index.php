@@ -31,7 +31,7 @@ function vars_is_set($variables, $vars)
    $set = true;
    foreach($variables as $variable)
    {
-      if (!isset($vars[$variable]))
+      if (!isset($vars["$variable"]))
       {
          $set = false;
       }
@@ -142,8 +142,10 @@ elseif($request->isPost())
    //generate and run sql query to add new player
    $sql = "INSERT INTO player (name, email, phone, username, password, rank) VALUES (?, ?, ?, ?, ?, ?);";
 
-   execute_sql_query($sql, [$name, $email, $phone, $username, $password]);
+   execute_sql_query($sql, [$name, $email, $phone, $username, $password, $rank], $db);
    //XXX http_response_code (202);
+
+   $results = array("error_text"=>"");
 }
 
 //delete
