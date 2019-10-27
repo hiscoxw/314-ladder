@@ -9,9 +9,9 @@ $request = new RestRequest();
 $vars = $request->getRequestVariables();
 
 //connect to the database
-$db = new PDO("pgsql:dbname=ladder host=localhost password=314dev user=dev");
+//$db = new PDO("pgsql:dbname=ladder host=localhost password=314dev user=dev");
 //XXX uncomment above and comment out below for dev environment
-//$db = new PDO("pgsql:dbname=wh_ladder host=localhost password=1392922 user=whiscox09");
+$db = new PDO("pgsql:dbname=wh_ladder host=localhost password=1392922 user=whiscox09");
 $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
 
@@ -21,7 +21,7 @@ function exit_on_failure($test, $msg)
    {
       $results["error_text"] = $msg;
       echo(json_encode($results));
-      http_response_code (400);
+      //XXX http_response_code (400);
       exit();
    }
 }
@@ -120,7 +120,7 @@ if($request->isGet())
    $results["winning_margin"] = execute_sql_query($sql2, [$username], $db)[0]["winning_margin"];
    $results["losing_margin"] = execute_sql_query($sql3, [$username], $db)[0]["losing_margin"];
 
-   http_response_code (200);
+   //XXX http_response_code (200);
 }
 
 //create
@@ -140,7 +140,10 @@ elseif($request->isPost())
    $rank = generate_new_rank($db);
 
    //generate and run sql query to add new player
-   $sql = "INSERT INTO player VALUES
+   $sql = "INSERT INTO player (name, email, phone, username, password, rank) VALUES (?, ?, ?, ?, ?, ?);";
+
+   execute_sql_query($sql, [$name, $email, $phone, $username, $password]);
+   //XXX http_response_code (202);
 }
 
 //delete
@@ -156,4 +159,5 @@ elseif($request->isPut())
 }
 
 echo(json_encode($results));
+
 ?>
