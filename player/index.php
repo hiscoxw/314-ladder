@@ -20,7 +20,7 @@ function exit_on_failure($test, $msg)
     if(!$test) {
         $results["error_text"] = $msg;
         echo(json_encode($results));
-        //XXX http_response_code (400);
+        http_response_code (400);
         exit();
     }
 }
@@ -40,10 +40,20 @@ function vars_is_set($variables, $vars)
 
 function execute_sql_query($sql, $args, $db)
 {
-    $statement = $db->prepare($sql);
-    $statement->execute((array)$args);
-    $returnvalue = $statement->fetchAll(PDO::FETCH_ASSOC);
+    try
+    {
+        $db->beginTransaction();
 
+        $statement = $db->prepare($sql);
+        $statement->execute((array)$args);
+        $returnvalue = $statement->fetchAll(PDO::FETCH_ASSOC);
+
+        $db->commit();
+    }
+    catch (Exception e)
+    {
+        $returnvalue = array("error_text" => e->getMessage());
+    }
     return $returnvalue;
 }
 
