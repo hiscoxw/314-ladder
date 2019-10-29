@@ -9,9 +9,9 @@ $request = new RestRequest();
 $vars = $request->getRequestVariables();
 
 //connect to the database
-//$db = new PDO("pgsql:dbname=ladder host=localhost password=314dev user=dev");
+$db = new PDO("pgsql:dbname=ladder host=localhost password=314dev user=dev");
 //XXX uncomment above and comment out below for dev environment
-$db = new PDO("pgsql:dbname=wh_ladder host=localhost password=1392922 user=whiscox09");
+//$db = new PDO("pgsql:dbname=wh_ladder host=localhost password=1392922 user=whiscox09");
 $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
 
@@ -50,9 +50,9 @@ function execute_sql_query($sql, $args, $db)
 
         $db->commit();
     }
-    catch (Exception e)
+    catch (Exception $e)
     {
-        $returnvalue = array("error_text" => e->getMessage());
+        $returnvalue = array("error_text" => $e->getMessage());
     }
     return $returnvalue;
 }
