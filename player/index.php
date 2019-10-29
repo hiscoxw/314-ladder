@@ -130,7 +130,7 @@ elseif($request->isPost()) {
     $email = $vars["email"];
     $phone = $vars["phone"];
     $username = $vars["username"];
-    $password = $vars["password"];
+    $password = password_hash($vars["password"], PASSWORD_DEFAULT);
 
     //assign a rank
     $rank = generate_new_rank($db);
