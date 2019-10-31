@@ -12,9 +12,16 @@ $vars = $request->getRequestVariables();
 //$db = new PDO("pgsql:dbname=ladder host=localhost password=314dev user=dev");
 //XXX uncomment above and comment out below for dev environment
 $db = new PDO("pgsql:dbname=wh_ladder host=localhost password=1392922 user=whiscox09");
+
 $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
 
+/**
+* Exits the program based on the results of a test that is passed in.
+*
+*@param bool $test is the result of the test that is passed in.
+*@param string $msg is the message to be displayed if the test has failed.
+*/
 function exit_on_failure($test, $msg)
 {
     if(!$test) {
@@ -25,6 +32,13 @@ function exit_on_failure($test, $msg)
     }
 }
 
+
+/**
+* Checks to see if the variables needed for the operation have been correctly set.
+*
+* @param array(string) $variables is the array of variable names, as strings needed as keys in the $vars array.
+* @param array $vars is the associative array of keys values passed in by the user.
+*/
 function vars_is_set($variables, $vars)
 {
     $set = true;
@@ -38,6 +52,14 @@ function vars_is_set($variables, $vars)
     return $set;
 }
 
+
+/**
+* Runs an sql query and returns the results.
+*
+*@param string $sql the query to be run
+*@param string[] $args the arguments of the query
+*@param PDO $db the database on which to run the query
+*/
 function execute_sql_query($sql, $args, $db)
 {
     try
@@ -57,6 +79,13 @@ function execute_sql_query($sql, $args, $db)
     return $returnvalue;
 }
 
+
+/**
+* Tests to see if a player exists in the database
+*
+*@param string $username the username of the player to find
+*@param PDO $db the database in which to search for the player
+*/
 function player_exists($username, $db)
 {
     $sql = "SELECT EXISTS(SELECT * FROM player WHERE username = ?);";
@@ -65,6 +94,12 @@ function player_exists($username, $db)
     return $exists == 1;
 }
 
+
+/**
+* Generates a new rank for a new player
+*
+* @param PDO $db the database where the new player will be added
+*/
 function generate_new_rank($db)
 {
     $sql = "SELECT MAX(rank) FROM player;";
@@ -72,6 +107,44 @@ function generate_new_rank($db)
 
     return $max + 1;
 }
+
+
+/**
+* Shifts ranks of all players up or down to account for changes in a single player's rank
+*
+*@param int $rank the rank below which to shift players
+*@param bool $isup the direction to shift players (up or down in rank -- up is true)
+*@param PDO $db the database on which to perform the shift
+*/
+function shift_all_ranks($rank, $isup, $db)
+{
+    $lower = execute_sql_query("SELECT MAX(rank) FROM player;", [], $db)[0]["max"];
+    
+    shift_rank_range($rank, $lower, $isup, $db);
+}
+
+
+/**
+*TODO
+*
+*/
+function shift_rank_range($upper, $lower, $isup, $db)
+{
+    if ($isup)
+    {
+        //Move ranks up
+        execute_sql_query("UPDATE player SET rank = rank -1 WHERE rank > ? AND rank <= ?;", [$upper, $lower], $db);
+    }
+    else
+    {
+        for ($x = $lower; $x >= $upper; $x--)
+        {
+            //Move ranks down
+            execute_sql_query("UPDATE player SET rank = rank + 1 WHERE rank = ?;", [$x], $db);
+        }
+    }
+}
+
 
 //view
 if($request->isGet()) {
@@ -127,13 +200,13 @@ if($request->isGet()) {
     $results["winning_margin"] = execute_sql_query($sql2, [$username], $db)[0]["winning_margin"];
     $results["losing_margin"] = execute_sql_query($sql3, [$username], $db)[0]["losing_margin"];
 
-    //XXX http_response_code (200);
+    http_response_code (200);
 }
 
 //create
 elseif($request->isPost()) {
     //Make sure all the variables are set
-    exit_on_failure(vars_is_set(["name", "email", "phone", "username", "password"], $vars), "ONE OR MORE REQUIRED VARIABLES ARE MISSING!");
+    exit_on_failure(vars_is_set(["name", "email", "phone", "username", "password"], $vars), "ONE OR MORE REQUIRED VARIABLES IS MISSING!");
 
     //Get required variables
     $name = $vars["name"];
@@ -142,6 +215,9 @@ elseif($request->isPost()) {
     $username = $vars["username"];
     $password = password_hash($vars["password"], PASSWORD_DEFAULT);
 
+    //TODO validate phone number structure
+    //TODO validate email structure
+
     //assign a rank
     $rank = generate_new_rank($db);
 
@@ -149,19 +225,96 @@ elseif($request->isPost()) {
     $sql = "INSERT INTO player (name, email, phone, username, password, rank) VALUES (?, ?, ?, ?, ?, ?);";
 
     execute_sql_query($sql, [$name, $email, $phone, $username, $password, $rank], $db);
-    //XXX http_response_code (202);
 
     $results = array("error_text"=>"");
+
+    http_response_code (202);
 }
 
 //delete
 elseif($request->isDelete()) {
-    //TODO implement Delete
+    //Make sure all the variables are set
+    exit_on_failure(vars_is_set(["username"], $vars), "CAN'T DELETE WITHOUT A USERNAME!");
+
+    //Get required variables
+    $username = $vars["username"];
+
+    //Make sure the username requested exists in the database
+    exit_on_failure(player_exists($username, $db), "THE REQUESTED PLAYER DOES NOT EXIST!");
+
+    //Remove all outstanding challenges and games
+    execute_sql_query("DELETE FROM challenge WHERE challenger = ? OR challengee = ?;", [$username, $username], $db);
+    execute_sql_query("DELETE FROM game WHERE winner = ? OR loser = ?;", [$username, $username], $db);
+
+    //Get the player's rank
+    $rank = execute_sql_query("SELECT rank FROM player WHERE username = ?", [$username], $db);
+
+    //Delete the player
+    execute_sql_query("DELETE FROM player WHERE username = ?;", [$username], $db);
+
+    //Update the rank of every lower-ranked player
+    shift_all_ranks($rank, true, $db);
+
+    $results = array("error_text"=>"");
+
+    http_response_code (200);
 }
 
 //update
 elseif($request->isPut()) {
-    //TODO implement Put
+    //Make sure all necessary variables are set
+    exit_on_failure(vars_is_set(["username", "name", "email", "rank", "phone"], $vars), "ONE OR MORE REQUIRED VARIABLES IS MISSING!");
+    //get variables
+    $username = $vars["username"];
+    $name = $vars["name"];
+    $email = $vars["email"];
+    $phone = $vars["phone"];
+    $new_rank = $vars["rank"];
+
+    //check to make sure the player exists
+    exit_on_failure(player_exists($username, $db), "THE REQUESTED PLAYER DOES NOT EXIST!");
+
+    //Get the player's old rank
+    $old_rank  = execute_sql_query("SELECT rank FROM player WHERE username = ?;", [$username], $db)[0]["rank"];
+    
+    //TODO validate phone number structure
+    //TODO validate email structure
+    
+    //if the rank is unchanged, update everything else
+    if ($old_rank == $new_rank)
+    {
+        $sql = "UPDATE player SET name = ?, email = ?, phone = ? WHERE username = ?;";
+        execute_sql_query($sql, [$name, $email, $phone, $username], $db);
+    }
+    else
+    {
+
+        //Build and execute the sql query to move the selected player to rank 0 for now
+        $sql = "UPDATE player SET name =  ?, email = ?, rank = 0, phone = ? WHERE username = ?;";
+        execute_sql_query($sql, [$name, $email, $phone, $username], $db);
+
+        //Make space for the new location of the player
+        
+        //if the old rank for the player is higher than the new rank i.e. $old_rank < $new_rank
+        if ($old_rank < $new_rank)
+        {
+            //Move ranks in between the old rank and the new rank up to fill in the old rank position
+            shift_rank_range($old_rank, $new_rank, true, $db);
+        }
+        //else if the old rank is lower thank the new rank ($old_rank > $new_rank)
+        else if ($old_rank > $new_rank)
+        {
+            //Move ranks in between the old rank and the new rank down to fill in the old rank position
+            shift_rank_range($new_rank, $old_rank, false, $db);
+        }
+    
+        //Update the rank of the player
+        $sql = "UPDATE player SET rank = ? WHERE username = ?;";
+        execute_sql_query($sql, [$new_rank, $username], $db);
+        
+    }
+
+    $results = array("error_text"=>"");
 }
 
 echo(json_encode($results));
