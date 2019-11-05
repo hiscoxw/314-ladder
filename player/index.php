@@ -9,7 +9,7 @@ $request = new RestRequest();
 $vars = $request->getRequestVariables();
 
 //connect to the database
-//$db = new PDO("pgsql:dbname=ladder host=localhost password=314dev user=dev");
+//:$db = new PDO("pgsql:dbname=ladder host=localhost password=314dev user=dev");
 //XXX uncomment above and comment out below for dev environment
 $db = new PDO("pgsql:dbname=wh_ladder host=localhost password=1392922 user=whiscox09");
 
@@ -125,24 +125,68 @@ function shift_all_ranks($rank, $isup, $db)
 
 
 /**
-*TODO
-*
+* Shifts ranks of all players within a range - from $upper rank to $lower rank, inclusive - up or down.
+* 
+*@param int $upper the top (lowest number) rank of the range, inclusive
+*@param int $lower the bottom (highest number) rank of the range, inclusive
+*@param bool $isup the direction to shift players (up or down in rank -- up is true)
+*@param PDO $db the database on which to perform the shift
 */
 function shift_rank_range($upper, $lower, $isup, $db)
 {
-    if ($isup)
-    {
-        //Move ranks up
-        execute_sql_query("UPDATE player SET rank = rank -1 WHERE rank > ? AND rank <= ?;", [$upper, $lower], $db);
-    }
-    else
-    {
-        for ($x = $lower; $x >= $upper; $x--)
+        if ($isup)
+        {
+            //Move ranks up
+            $sql = "UPDATE player SET rank = rank - 1 WHERE rank = ?;";
+
+            $x = $upper;
+        }
+        else
         {
             //Move ranks down
-            execute_sql_query("UPDATE player SET rank = rank + 1 WHERE rank = ?;", [$x], $db);
+            $sql = "UPDATE player SET rank = rank + 1 WHERE rank = ?;";
+
+            $x = $lower;
         }
-    }
+
+        
+        while ($x <= $lower && $x >= $upper)
+        {
+            execute_sql_query($sql, [$x], $db);
+
+            if ($isup)
+            {
+                $x++;
+            }
+            else
+            {
+                $x--;
+            }
+        }
+}
+
+
+/**
+* Validates a phone number. It is valid if it is 10 numeric characters.
+*
+*@param string $phone the phone number to be validated
+*/
+function validate_phone($phone)
+{
+    $regex = '^[0-9]{10}^';
+
+    return preg_match($regex, $phone);
+}
+
+
+/**
+* Validates an email.
+*
+*@param string $email the email to be validated
+*/
+function validate_email($email)
+{
+    return filter_var($email, FILTER_VALIDATE_EMAIL);
 }
 
 
@@ -215,8 +259,11 @@ elseif($request->isPost()) {
     $username = $vars["username"];
     $password = password_hash($vars["password"], PASSWORD_DEFAULT);
 
-    //TODO validate phone number structure
-    //TODO validate email structure
+    //validate phone number structure
+    exit_on_failure(validate_phone($phone), "THE PHONE NUMBER GIVEN WAS NOT FORMATTED CORRECTLY!");
+    
+    //validate email structure
+    exit_on_failure(validate_email($email), "THE EMAIL GIVEN WAS NOT FORMATTED CORRECTLY!");
 
     //assign a rank
     $rank = generate_new_rank($db);
@@ -247,7 +294,7 @@ elseif($request->isDelete()) {
     execute_sql_query("DELETE FROM game WHERE winner = ? OR loser = ?;", [$username, $username], $db);
 
     //Get the player's rank
-    $rank = execute_sql_query("SELECT rank FROM player WHERE username = ?", [$username], $db);
+    $rank = execute_sql_query("SELECT rank FROM player WHERE username = ?", [$username], $db)['0']["rank"];
 
     //Delete the player
     execute_sql_query("DELETE FROM player WHERE username = ?;", [$username], $db);
@@ -277,8 +324,11 @@ elseif($request->isPut()) {
     //Get the player's old rank
     $old_rank  = execute_sql_query("SELECT rank FROM player WHERE username = ?;", [$username], $db)[0]["rank"];
     
-    //TODO validate phone number structure
-    //TODO validate email structure
+    //validate phone number structure
+    exit_on_failure(validate_phone($phone), "THE PHONE NUMBER GIVEN WAS NOT FORMATTED CORRECTLY!");
+
+    //validate email structure
+    exit_on_failure(validate_email($email), "THE EMAIL GIVEN WAS NOT FORMATTED CORRECTLY!");
     
     //if the rank is unchanged, update everything else
     if ($old_rank == $new_rank)

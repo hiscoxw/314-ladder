@@ -1,1 +1,0 @@
-curl -X POST -H "Content-Type: application/json" localhost/314-ladder/player/ -d '{"name":"Will Hiscox", "email":"whiscox09@georgefox.edu", "phone":1234567890, "username":"whiscox09", "password":"password"}'
