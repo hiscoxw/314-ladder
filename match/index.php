@@ -40,8 +40,8 @@ if($request->isGet()) {
         //Validate played
         exit_on_failure(validate_date_time($played), "$played IS NOT A VALID DATE FORMAT!");
 
-        $sql = "SELECT * FROM game WHERE played = ?;";
-        $results = execute_sql_query($sql, [$played], $db);
+        $sql = "SELECT * FROM (SELECT * FROM game WHERE played = ?) AS sub WHERE winner = ? OR loser = ?;";
+        $results = execute_sql_query($sql, [$played, $username, $username], $db);
     }
     else
     {
