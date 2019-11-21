@@ -215,4 +215,32 @@ function validate_match_is_full($games)
     return sizeOf($games) == 3;
 }
 
+
+/**
+*TODO
+*/
+function check_valid_challengee($challenger, $challengee, $db)
+{
+    //Get the challenger's rank
+    $rank = execute_sql_query("SELECT rank FROM player WHERE username = ?;", [$challenger], $db)[0]["rank"];
+
+    //Get the list of valid challengees for the challenger's rank
+    $sql = file_get_contents("get_challengees.sql");
+    $candidates = execute_sql_query($sql, [$rank, $rank], $db);
+
+    //check each valid candidate to see if challengee is listed
+    $valid = false;
+    
+    foreach ($candidates as $candidate)
+    {
+        
+        if($candidate["username"] == $challengee)
+        {
+            $valid = true;
+        }
+    }
+
+    return $valid;
+}
+
 ?>

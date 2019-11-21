@@ -23,7 +23,7 @@ if($request->isGet()) {
     if(isset($vars["player"]))
     {
         //ensure that "challenger" isn't also set
-        exit_on_failure(isset($vars["challenger"]), "ONLY PLAYER OR CHALLENGER CAN BE SET; NOT BOTH!");
+        exit_on_failure(!isset($vars["challenger"]), "ONLY PLAYER OR CHALLENGER CAN BE SET; NOT BOTH!");
 
         //get the value of player
         $player = $vars["player"];
@@ -38,7 +38,7 @@ if($request->isGet()) {
         $results["challenges"] = execute_sql_query($sql, [$player, $player], $db);
     }
     //else if the challenger key is set, return the players available for the challenger to challenge
-    else if(isset($vars["challenger"])
+    else if(isset($vars["challenger"]))
     {
         //get the value of challenger
         $challenger = $vars["challenger"];
@@ -47,11 +47,11 @@ if($request->isGet()) {
         exit_on_failure(player_exists($challenger, $db), "PLAYER $challenger DOES NOT EXIST!");
 
         //get the rank of the challenger
-        $rank = execute_sql_query("SELECT rank FROM player WHERE username = ?;", [$challenger], $db);
+        $rank = execute_sql_query("SELECT rank FROM player WHERE username = ?;", [$challenger], $db)[0]["rank"];
 
         //generate the sql query
-        $sql = file_get_contents("get_challengees.php");
-
+        $sql = file_get_contents("get_challengees.sql");
+        
         //run the sql query
         $results["candidates"] = execute_sql_query($sql, [$rank, $rank], $db);
     }
@@ -65,29 +65,33 @@ if($request->isGet()) {
 
 //create
 elseif($request->isPost()) {
-    //Make sure all the variables are set
-    exit_on_failure(vars_is_set(["name", "email", "phone", "username", "password"], $vars), "ONE OR MORE REQUIRED VARIABLES IS MISSING!");
+
+    //Check to make sure required variables are set
+    exit_on_failure(vars_is_set(["challenger", "challengee", "scheduled"], $vars), "ONE OR MORE REQUIRED VARIABLES IS MISSING!");
 
     //Get required variables
-    $name = $vars["name"];
-    $email = $vars["email"];
-    $phone = $vars["phone"];
-    $username = $vars["username"];
-    $password = password_hash($vars["password"], PASSWORD_DEFAULT);
+    $challenger = $vars["challenger"];
+    $challengee = $vars["challengee"];
+    $scheduled = $vars["scheduled"];
 
-    //validate phone number structure
-    exit_on_failure(validate_phone($phone), "THE PHONE NUMBER GIVEN WAS NOT FORMATTED CORRECTLY!");
-    
-    //validate email structure
-    exit_on_failure(validate_email($email), "THE EMAIL GIVEN WAS NOT FORMATTED CORRECTLY!");
+    //Check to make sure that both challenger and challengee exist as players in the database
+    exit_on_failure(player_exists($challenger, $db), "PLAYER $challenger DOESN'T EXIST IN THE DATABASE!");
+    exit_on_failure(player_exists($challengee, $db), "PLAYER $challengee DOESN'T EXIST IN THE DATABASE!");
 
-    //assign a rank
-    $rank = generate_new_rank($db);
+    //Check to make sure that the scheduled date is formatted correctly
+    exit_on_failure(validate_date_time($scheduled), "THE SCHEDULED DATE IS FORMATTED INCORRECTLY!");
 
-    //generate and run sql query to add new player
-    $sql = "INSERT INTO player (name, email, phone, username, password, rank) VALUES (?, ?, ?, ?, ?, ?);";
+    //Make sure the challengee is valid for the challenger.
+    exit_on_failure(check_valid_challengee($challenger, $challengee, $db), "THE CHALLENGER, $challenger, CANNOT CHALLENGE $challengee!");
 
-    execute_sql_query($sql, [$name, $email, $phone, $username, $password, $rank], $db);
+    //TODO make sure the challenge is unique
+
+    //generate the issued date/time as today's date/time in the correct format (YYYY-MM-DD HH:MM:SS)
+    $issued = date("Y-m-d H:i:s");
+
+    //generate and execute the sql query to add the challenge
+    $sql = "INSERT INTO challenge (challenger, challengee, issued, scheduled) VALUES (?, ?, ?, ?);";
+    execute_sql_query($sql, [$challenger, $challengee, $issued, $scheduled], $db);
 
     $results = array("error_text"=>"");
 
@@ -97,26 +101,16 @@ elseif($request->isPost()) {
 //delete
 elseif($request->isDelete()) {
     //Make sure all the variables are set
-    exit_on_failure(vars_is_set(["username"], $vars), "CAN'T DELETE WITHOUT A USERNAME!");
+    exit_on_failure(vars_is_set(["challenger", "challengee", "scheduled"], $vars), "MISSING ONE OR MORE REQUIRED VARIABLES!");
 
     //Get required variables
-    $username = $vars["username"];
-
-    //Make sure the username requested exists in the database
-    exit_on_failure(player_exists($username, $db), "THE REQUESTED PLAYER DOES NOT EXIST!");
-
-    //Remove all outstanding challenges and games
-    execute_sql_query("DELETE FROM challenge WHERE challenger = ? OR challengee = ?;", [$username, $username], $db);
-    execute_sql_query("DELETE FROM game WHERE winner = ? OR loser = ?;", [$username, $username], $db);
-
-    //Get the player's rank
-    $rank = execute_sql_query("SELECT rank FROM player WHERE username = ?", [$username], $db)['0']["rank"];
-
-    //Delete the player
-    execute_sql_query("DELETE FROM player WHERE username = ?;", [$username], $db);
-
-    //Update the rank of every lower-ranked player
-    shift_all_ranks($rank, true, $db);
+    $challenger = $vars["challenger"];
+    $challengee = $vars["challengee"];
+    $scheduled = $vars["scheduled"];
+    
+    //generate and execute the sql query
+    $sql = "DELETE FROM challenge WHERE challenger = ? AND challengee = ? AND scheduled = ?;";
+    execute_sql_query($sql, [$challenger, $challengee, $scheduled], $db);
 
     $results = array("error_text"=>"");
 
@@ -126,58 +120,40 @@ elseif($request->isDelete()) {
 //update
 elseif($request->isPut()) {
     //Make sure all necessary variables are set
-    exit_on_failure(vars_is_set(["username", "name", "email", "rank", "phone"], $vars), "ONE OR MORE REQUIRED VARIABLES IS MISSING!");
+    exit_on_failure(vars_is_set(["challenger", "challengee", "scheduled"], $vars), "ONE OR MORE REQUIRED VARIABLES IS MISSING!");
+    exit_on_failure(key_exists("accepted", $vars), "THE accepted VARIABLE MUST BE SET, CAN BE NULL!");
+
+
     //get variables
-    $username = $vars["username"];
-    $name = $vars["name"];
-    $email = $vars["email"];
-    $phone = $vars["phone"];
-    $new_rank = $vars["rank"];
+    $challenger = $vars["challenger"];
+    $challengee = $vars["challengee"];
+    $scheduled = $vars["scheduled"];
+    $accepted = $vars["accepted"];
 
-    //check to make sure the player exists
-    exit_on_failure(player_exists($username, $db), "THE REQUESTED PLAYER DOES NOT EXIST!");
-
-    //Get the player's old rank
-    $old_rank  = execute_sql_query("SELECT rank FROM player WHERE username = ?;", [$username], $db)[0]["rank"];
+    //Validate datetime format for scheduled
+    exit_on_failure(validate_date_time($scheduled), "$scheduled IS NOT A VALID DATETIME FORMAT FOR SCHEDULED!");
     
-    //validate phone number structure
-    exit_on_failure(validate_phone($phone), "THE PHONE NUMBER GIVEN WAS NOT FORMATTED CORRECTLY!");
+    //update information
+    $sql = "UPDATE challenge SET scheduled = ? WHERE challenger = ? AND challengee = ?;";
+    execute_sql_query($sql, [$scheduled, $challenger, $challengee], $db);
 
-    //validate email structure
-    exit_on_failure(validate_email($email), "THE EMAIL GIVEN WAS NOT FORMATTED CORRECTLY!");
-    
-    //if the rank is unchanged, update everything else
-    if ($old_rank == $new_rank)
+    //TODO If accepted, all other outstanding challenges must be removed
+    if ($accepted != "")
     {
-        $sql = "UPDATE player SET name = ?, email = ?, phone = ? WHERE username = ?;";
-        execute_sql_query($sql, [$name, $email, $phone, $username], $db);
-    }
-    else
-    {
-
-        //Build and execute the sql query to move the selected player to rank 0 for now
-        $sql = "UPDATE player SET name =  ?, email = ?, rank = 0, phone = ? WHERE username = ?;";
-        execute_sql_query($sql, [$name, $email, $phone, $username], $db);
-
-        //Make space for the new location of the player
+        //Validate datetime format for accepted
+        exit_on_failure(validate_date_time($accepted), "$accepted IS NOT A VALID DATETIME FORMAT FOR SCHEDULED!");
         
-        //if the old rank for the player is higher than the new rank i.e. $old_rank < $new_rank
-        if ($old_rank < $new_rank)
-        {
-            //Move ranks in between the old rank and the new rank up to fill in the old rank position
-            shift_rank_range($old_rank, $new_rank, true, $db);
-        }
-        //else if the old rank is lower thank the new rank ($old_rank > $new_rank)
-        else if ($old_rank > $new_rank)
-        {
-            //Move ranks in between the old rank and the new rank down to fill in the old rank position
-            shift_rank_range($new_rank, $old_rank, false, $db);
-        }
-    
-        //Update the rank of the player
-        $sql = "UPDATE player SET rank = ? WHERE username = ?;";
-        execute_sql_query($sql, [$new_rank, $username], $db);
-        
+        //Set accepted
+        $sql = "UPDATE challenge SET accepted = ? WHERE challenger = ? AND challengee = ?;";
+        execute_sql_query($sql, [$accepted, $challenger, $challengee], $db);
+
+        //Delete outstanding challenges for both challenger and challengee
+        $sql = "DELETE FROM challenge WHERE challenger = ? AND accepted IS NULL;";
+        execute_sql_query($sql, [$challenger], $db);
+        execute_sql_query($sql, [$challengee], $db);
+        $sql = "DELETE FROM challenge WHERE challengee = ? AND accepted IS NULL;";
+        execute_sql_query($sql, [$challenger], $db);
+        execute_sql_query($sql, [$challengee], $db);
     }
 
     $results = array("error_text"=>"");
