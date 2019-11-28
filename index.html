@@ -1,1 +1,80 @@
-Hello World!
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>314 Foos Ball Ladder</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
+    <script>
+    $(document).ready(function(){
+        //$("#user_menu").hide();
+        //$("#full_ladder").hide();
+        //$("#challenges_tab").hide();
+        $(".logged_in").hide();
+
+        $("#login_button").click(function(){
+            $(".logged_in").show();
+            $(".logged_out").hide();
+        });
+
+        $("#logout_button").click(function(){
+            $(".logged_in").hide();
+            $(".logged_out").show();
+        });
+    });
+    </script>
+</head>
+
+
+
+<body>
+    <nav class="navbar navbar-inverse">
+        <div class="container-fluid">
+            <div class="navbar-header">
+                <a class="navbar-brand" href=".">CSIS 314 Foos Ball Ladder</a>
+            </div>
+            <ul class="nav navbar-nav">
+                <li class="active"><a href="#">Ladder</a></li>
+                <li><a href="#" id="challenges_tab" class="logged_in">My Challenges</a></li>
+            </ul>
+            <ul class="nav navbar-nav navbar-right">
+                 <li><a href="#" id="signup_button" class="logged_out"><span class="glyphicon glyphicon-user"></span> Sign Up</a></li>
+                 <li class="dropdown logged_in" id="user_menu">
+                    <a class="dropdown-toggle" data-toggle="dropdown" href="#"><span class="glyphicon glyphicon-user"></span>Username <!-- TODO --> <span class="caret"></span></a>
+                        <ul class="dropdown-menu">
+                            <li><a href="#" id="logout_button">Sign Out</a></li>
+                            <li><a href="#">Account</a></li>
+                        </ul>
+                 </li>
+                 <li class="logged_out"><a href="#" id="login_button"><span class="glyphicon glyphicon-log-in"></span>Sign In</a></li>
+            </ul>
+        </div>
+    </nav>
+
+
+    <div class="jumbotron text-center">
+        <h1> Welcome to the 314 Foos Ball Tournament Ladder! </h1>
+        <p class="logged_out"> Please sign in or sign up to see the full ladder. </p>
+    </div>
+
+
+    <div class="container logged_in" id="full_ladder">
+        <h2> Click on a row to issue a challenge! </h2>
+        <p> Remember: You can only challenge people who are ranked above you up to three ranks. </p>
+        <table class="table table-hover table-striped table-bordered">
+            <thead>
+                <tr> <th>Rank</th> <th>Firstname</th> <th>Lastname</th> </tr>
+            </thead>
+            <tbody>
+                <tr> <td>1</td> <td>John</td> <td>Doe</td> </tr>
+                <tr> <td>2</td> <td>Mary</td> <td>Moe</td> </tr>
+                <tr> <td>3</td> <td>July</td> <td>Dooley</td> </tr>
+            </tbody>
+        </table>
+    </div>
+</body>
+
+
+</html>
