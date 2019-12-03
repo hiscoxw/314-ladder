@@ -11,10 +11,9 @@
     $(document).ready(function(){
         $(".logged_in").hide();
 
-        $("#login_button").click(function(){
-            $("#SignInModal").show();
-          //  $(".logged_in").show();
-          //  $(".logged_out").hide();
+        $("#login_submit").click(function(){
+            //$(".logged_in").show();
+            //$(".logged_out").hide();
         });
 
         $("#logout_button").click(function(){
@@ -46,7 +45,7 @@
                             <li><a href="#">Account</a></li>
                         </ul>
                  </li>
-                 <li class="logged_out"><a href="#" id="login_button"><span class="glyphicon glyphicon-log-in"></span>Sign In</a></li>
+                 <li class="logged_out"><a href="#" id="login_button" data-toggle="modal" data-target="#SignInModal"><span class="glyphicon glyphicon-log-in"></span>Sign In</a></li>
             </ul>
         </div>
     </nav>
@@ -82,12 +81,12 @@
                     </button>
                 </div>
                 <div class="modal-body">
-                    <p>Username: </p><input type="input"></input>
-                    <div />
-                    <p>Password:</p><input type="password"></input>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-primary">Submit</button>
+                    <form action= "login/index.php" method="post">
+                        Username: <input type="text" name="username"></input>
+                        <br />
+                        Password:<input type="password" name="password"></input>
+                        <input type="submit" value="Submit" />
+                    </form>
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
                 </div>
             </div>
