@@ -9,14 +9,12 @@
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
     <script>
     $(document).ready(function(){
-        //$("#user_menu").hide();
-        //$("#full_ladder").hide();
-        //$("#challenges_tab").hide();
         $(".logged_in").hide();
 
         $("#login_button").click(function(){
-            $(".logged_in").show();
-            $(".logged_out").hide();
+            $("#SignInModal").show();
+          //  $(".logged_in").show();
+          //  $(".logged_out").hide();
         });
 
         $("#logout_button").click(function(){
@@ -73,6 +71,27 @@
                 <tr> <td>3</td> <td>July</td> <td>Dooley</td> </tr>
             </tbody>
         </table>
+    </div>
+    <div id="SignInModal" class="modal" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Sign In</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p>Username: </p><input type="input"></input>
+                    <div />
+                    <p>Password:</p><input type="password"></input>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary">Submit</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                </div>
+            </div>
+        </div>
     </div>
 </body>
 
