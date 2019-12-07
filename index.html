@@ -8,13 +8,6 @@
         <script>
                                 
         
-            function start_JS_session(response)
-            {
-                var username = $.get("login/");
-
-                sessionStorage.setItem("username", username);
-            }
-
             function get_form_data(form)
             {
                 var data = {username:form.username.value, password:form.password.value};
@@ -23,47 +16,51 @@
         
             $(function()
             {
-                var username = sessionStorage.getItem("username");
-                var url = "login/";
 
-                if (username !== "undefined")
-                {
-                    $(".logged_in").hide();
-                    $(".logged_out").show();
-                }
-                else
-                {
-                    var user = document.getElementById("user");
-                    var who = document.getElementById("whoslogged");
 
-                    user.innerHTML = username;
-                    who.innerHTML = username + " is logged in.";
 
-                    
-                    $(".logged_in").show();
-                    $(".logged_out").hide();
-                }
-         
+                //Send a get request to the server to see if anyone is logged in
+                //If they are, save their username in sessionStorage and show elements for logged in status
+                //Else, clear the sessionStorage, hide logged in elements, and show logged out elements
+                $.ajax({
+                    type: "GET",
+                    url: "login/",
+                    success: function(data) {
+                        sessionStorage.setItem("username", JSON.parse(data)["username"]);
+                        var user = document.getElementById("user");
+
+                        user.innerHTML = JSON.parse(data)["username"];
+                        
+                        $(".logged_in").show();
+                        $(".logged_out").hide();
+                    },
+                    error: function() {
+                        
+                        sessionStorage.clear();
+                        
+                        $(".logged_in").hide();
+                        $(".logged_out").show();
+                    }
+                });
+
                 $("#login_submit").click(function(){
                     var $data = get_form_data(document.forms.SignInForm);
 
-                    /*$.ajax({
-                        url: url,
-                        type: "POST",
-                        data: $data,
-                        contentType: "application/json; charset=utf-8",
-                        dataType: "json",
-                        success: start_JS_session
-                    });*/
-
-                    $.post(url, $data, start_JS_session);
+                    $.post("login/", $data, function (data) {
+                        location.reload();
+                    });
+                    //location.reload();
 
                 });
                 
                 $("#logout_button").click(function(){
                     $.ajax({
-                        url:url,
-                        type: "delete"
+                        url:"login/",
+                        type: "delete",
+                        success: function () {
+                            sessionStorage.clear();
+                            location.reload();
+                        }
                     });
                 });
             });
@@ -81,7 +78,7 @@
                     <li class="logged_in"><a href="#" id="challenges_tab">My Challenges</a></li>
                 </ul>
                 <ul class="nav navbar-nav navbar-right">
-                    <li><a href="#" id="signup_button" class="logged_out"><span class="glyphicon glyphicon-user"></span> Sign Up</a></li>
+                    <li class="logged_out"><a href="#" id="signup_button" data-toggle="modal" data-target="#SignUpModal"><span class="glyphicon glyphicon-user"></span> Sign Up</a></li>
                     <li class="dropdown logged_in" id="user_menu">
                         <a class="dropdown-toggle" data-toggle="dropdown" href="#"><span class="glyphicon glyphicon-user"></span><div id="user"></div><span class="caret"></span></a>
                             <ul class="dropdown-menu">
@@ -109,10 +106,7 @@
                 <thead>
                     <tr> <th>Rank</th> <th>Firstname</th> <th>Lastname</th> </tr>
                 </thead>
-                <tbody>
-                    <tr> <td>1</td> <td>John</td> <td>Doe</td> </tr>
-                    <tr> <td>2</td> <td>Mary</td> <td>Moe</td> </tr>
-                    <tr> <td>3</td> <td>July</td> <td>Dooley</td> </tr>
+                <tbody id="LoggedInTableBody">
                 </tbody>
             </table>
         </div>
@@ -127,9 +121,9 @@
                             <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true"></span></button>
                         </div>
                         <div class="modal-body">
-                            Username: <input type="text" name="username"></input>
+                            <label for="username" form="SignInForm">Username: </label><input type="text" name="username"></input>
                             <br />
-                            Password:<input type="password" name="password"></input>
+                            <label for="password" form="SignInForm">Password: </label><input type="password" name="password"></input>
                         </div>
                         <div class="modal-footer">
                             <button id="login_submit" type="button" class="btn btn-primary" value="Submit" onclick="return false;" data-dismiss="modal">Submit</button>
@@ -140,6 +134,7 @@
             </form>
         </div>
         
+
         <div id="SignUpModal" class="modal" tabindex="-1" role="dialog">
             <form name="SignUpForm" >
                 <div class="modal-dialog" role="document">
@@ -149,9 +144,11 @@
                             <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true"></span></button>
                         </div>
                         <div class="modal-body">
-                            Username: <input type="text" name="username"></input>
+                            <label for="username" form="SignUpForm">Username:</label><input type="text" name="username"></input>
                             <br />
-                            Password:<input type="password" name="password"></input>
+                            <label for="password" form="SignUpForm">Password:</label><input type="password" name="password"></input>
+                            <br />
+                            <label for="password_confirm" form="SignUpForm">Confirm Password:<input type="password" name="password_confirm"></input>
                         </div>
                         <div class="modal-footer">
                             <button id="signup_submit" type="submit" class="btn btn-primary" value="Submit">Submit</button>
@@ -161,8 +158,6 @@
                 </div>
             </form>
         </div>
-
-        
 
 
     </body>
