@@ -49,8 +49,16 @@
                 $("#login_submit").click(function(){
                     var $data = get_login_form_data(document.forms.SignInForm);
 
-                    $.post("login/", $data, function (data) {
-                        location.reload();
+                    $.ajax({
+                        url:"login/",
+                        type:"POST",
+                        data: $data,
+                        success: function(data) {
+                            location.reload();
+                        },
+                        error: function() {
+                            alert("Invalid Login!");
+                        }
                     });
                 });
                 
@@ -87,7 +95,26 @@
                         {
                             alert("Passwords do not match!");
                         }
+                });
+
+                $("#leave_ladder").click(function(){
+
+                    var data = JSON.stringify(sessionStorage);
+
+                    $.ajax({
+                        url: "player/",
+                        type: "delete",
+                        data: data,
+                        success: function () {
+                            alert("Successfully Left Ladder!");
+                        },
+                        error: function() {
+                            alert("Something went wrong with leaving the ladder!");
+                        }
+                    });
                     
+                    $("#logout_button").trigger("click");
+
                 });
             });
         </script>
@@ -110,6 +137,7 @@
                             <ul class="dropdown-menu">
                                 <li><a href="#" id="logout_button">Sign Out</a></li>
                                 <li><a href="#">Account</a></li>
+                                <li><a id="leave_ladder" href="#">Leave Ladder</a></li>
                             </ul>
                     </li>
                     <li class="logged_out"><a href="#" id="login_button" data-toggle="modal" data-target="#SignInModal"><span class="glyphicon glyphicon-log-in"></span>Sign In</a></li>
@@ -120,7 +148,6 @@
         
         <div class="jumbotron text-center">
             <h1> Welcome to the 314 Foos Ball Tournament Ladder! </h1>
-            <h2 id="whoslogged"></h2>
             <p class="logged_out"> Please sign in or sign up to see the full ladder. </p>
         </div>
         
