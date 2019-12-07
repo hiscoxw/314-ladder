@@ -8,17 +8,20 @@
         <script>
                                 
         
-            function get_form_data(form)
+            function get_login_form_data(form)
             {
                 var data = {username:form.username.value, password:form.password.value};
+                return JSON.stringify(data);
+            }
+
+            function get_signup_form_data(form)
+            {
+                var data = {name:form.name.value, email:form.email.value, phone:form.phone.value, username:form.username.value, password:form.password.value};
                 return JSON.stringify(data);
             }
         
             $(function()
             {
-
-
-
                 //Send a get request to the server to see if anyone is logged in
                 //If they are, save their username in sessionStorage and show elements for logged in status
                 //Else, clear the sessionStorage, hide logged in elements, and show logged out elements
@@ -44,13 +47,11 @@
                 });
 
                 $("#login_submit").click(function(){
-                    var $data = get_form_data(document.forms.SignInForm);
+                    var $data = get_login_form_data(document.forms.SignInForm);
 
                     $.post("login/", $data, function (data) {
                         location.reload();
                     });
-                    //location.reload();
-
                 });
                 
                 $("#logout_button").click(function(){
@@ -62,6 +63,31 @@
                             location.reload();
                         }
                     });
+                });
+
+                $("#signup_submit").click(function(){
+                    
+                        if (document.forms.SignUpForm.password.value == document.forms.SignUpForm.password_confirm.value)
+                        {
+                            var data = get_signup_form_data(document.forms.SignUpForm);
+                            $.ajax({
+                                url:"player/",
+                                type:"POST",
+                                data:data,
+                                success: function() {
+                                    alert("Successfully Joined!");
+                                    location.reload();
+                                },
+                                error: function() {
+                                    alert("Failed to Join Ladder!");
+                                }
+                            });
+                        }
+                        else
+                        {
+                            alert("Passwords do not match!");
+                        }
+                    
                 });
             });
         </script>
@@ -144,14 +170,20 @@
                             <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true"></span></button>
                         </div>
                         <div class="modal-body">
-                            <label for="username" form="SignUpForm">Username:</label><input type="text" name="username"></input>
+                            <label for="name" form="SignUpForm">Name:</label><input type="text" name="name" required></input>
                             <br />
-                            <label for="password" form="SignUpForm">Password:</label><input type="password" name="password"></input>
+                            <label for="email" form="SignUpForm">Email:</label><input type="email" name="email" required></input>
                             <br />
-                            <label for="password_confirm" form="SignUpForm">Confirm Password:<input type="password" name="password_confirm"></input>
+                            <label for="phone" form="SignUpForm">Phone:</label><input type="phone" name="phone" required></input>
+                            <br />
+                            <label for="username" form="SignUpForm">Username:</label><input type="text" name="username" required></input>
+                            <br />
+                            <label for="password" form="SignUpForm">Password:</label><input type="password" name="password" required></input>
+                            <br />
+                            <label for="password_confirm" form="SignUpForm">Confirm Password:<input type="password" name="password_confirm" required></input>
                         </div>
                         <div class="modal-footer">
-                            <button id="signup_submit" type="submit" class="btn btn-primary" value="Submit">Submit</button>
+                            <button id="signup_submit" type="submit" class="btn btn-primary" value="Submit" data-dismiss="modal">Submit</button>
                             <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
                         </div>
                     </div>
