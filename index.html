@@ -1,98 +1,171 @@
-<!DOCTYPE html>
+<?DOCTYPE html>
 <html lang="en">
-<head>
-    <title>314 Foos Ball Ladder</title>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
-    <script>
-    $(document).ready(function(){
-        $(".logged_in").hide();
+    <head>
+        <title>314 Foos Ball Ladder</title>
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
+        <script>
+                                
+        
+            function start_JS_session(response)
+            {
+                var username = $.get("login/");
 
-        $("#login_submit").click(function(){
-            //$(".logged_in").show();
-            //$(".logged_out").hide();
-        });
+                sessionStorage.setItem("username", username);
+            }
 
-        $("#logout_button").click(function(){
-            $(".logged_in").hide();
-            $(".logged_out").show();
-        });
-    });
-    </script>
-</head>
+            function get_form_data(form)
+            {
+                var data = {username:form.username.value, password:form.password.value};
+                return JSON.stringify(data);
+            }
+        
+            $(function()
+            {
+                var username = sessionStorage.getItem("username");
+                var url = "login/";
 
+                if (username !== "undefined")
+                {
+                    $(".logged_in").hide();
+                    $(".logged_out").show();
+                }
+                else
+                {
+                    var user = document.getElementById("user");
+                    var who = document.getElementById("whoslogged");
 
+                    user.innerHTML = username;
+                    who.innerHTML = username + " is logged in.";
 
-<body>
-    <nav class="navbar navbar-inverse">
-        <div class="container-fluid">
-            <div class="navbar-header">
-                <a class="navbar-brand" href=".">CSIS 314 Foos Ball Ladder</a>
-            </div>
-            <ul class="nav navbar-nav">
-                <li class="active"><a href="#">Ladder</a></li>
-                <li><a href="#" id="challenges_tab" class="logged_in">My Challenges</a></li>
-            </ul>
-            <ul class="nav navbar-nav navbar-right">
-                 <li><a href="#" id="signup_button" class="logged_out"><span class="glyphicon glyphicon-user"></span> Sign Up</a></li>
-                 <li class="dropdown logged_in" id="user_menu">
-                    <a class="dropdown-toggle" data-toggle="dropdown" href="#"><span class="glyphicon glyphicon-user"></span>Username <!-- TODO --> <span class="caret"></span></a>
-                        <ul class="dropdown-menu">
-                            <li><a href="#" id="logout_button">Sign Out</a></li>
-                            <li><a href="#">Account</a></li>
-                        </ul>
-                 </li>
-                 <li class="logged_out"><a href="#" id="login_button" data-toggle="modal" data-target="#SignInModal"><span class="glyphicon glyphicon-log-in"></span>Sign In</a></li>
-            </ul>
-        </div>
-    </nav>
+                    
+                    $(".logged_in").show();
+                    $(".logged_out").hide();
+                }
+         
+                $("#login_submit").click(function(){
+                    var $data = get_form_data(document.forms.SignInForm);
 
+                    /*$.ajax({
+                        url: url,
+                        type: "POST",
+                        data: $data,
+                        contentType: "application/json; charset=utf-8",
+                        dataType: "json",
+                        success: start_JS_session
+                    });*/
 
-    <div class="jumbotron text-center">
-        <h1> Welcome to the 314 Foos Ball Tournament Ladder! </h1>
-        <p class="logged_out"> Please sign in or sign up to see the full ladder. </p>
-    </div>
+                    $.post(url, $data, start_JS_session);
 
-
-    <div class="container logged_in" id="full_ladder">
-        <h2> Click on a row to issue a challenge! </h2>
-        <p> Remember: You can only challenge people who are ranked above you up to three ranks. </p>
-        <table class="table table-hover table-striped table-bordered">
-            <thead>
-                <tr> <th>Rank</th> <th>Firstname</th> <th>Lastname</th> </tr>
-            </thead>
-            <tbody>
-                <tr> <td>1</td> <td>John</td> <td>Doe</td> </tr>
-                <tr> <td>2</td> <td>Mary</td> <td>Moe</td> </tr>
-                <tr> <td>3</td> <td>July</td> <td>Dooley</td> </tr>
-            </tbody>
-        </table>
-    </div>
-    <div id="SignInModal" class="modal" tabindex="-1" role="dialog">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Sign In</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
+                });
+                
+                $("#logout_button").click(function(){
+                    $.ajax({
+                        url:url,
+                        type: "delete"
+                    });
+                });
+            });
+        </script>
+    </head>
+    
+    <body>
+        <nav class="navbar navbar-inverse">
+            <div class="container-fluid">
+                <div class="navbar-header">
+                    <a class="navbar-brand" href=".">CSIS 314 Foos Ball Ladder</a>
                 </div>
-                <div class="modal-body">
-                    <form action= "login/index.php" method="post">
-                        Username: <input type="text" name="username"></input>
-                        <br />
-                        Password:<input type="password" name="password"></input>
-                        <input type="submit" value="Submit" />
-                    </form>
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                </div>
+                <ul class="nav navbar-nav">
+                    <li class="active"><a href="#">Ladder</a></li>
+                    <li class="logged_in"><a href="#" id="challenges_tab">My Challenges</a></li>
+                </ul>
+                <ul class="nav navbar-nav navbar-right">
+                    <li><a href="#" id="signup_button" class="logged_out"><span class="glyphicon glyphicon-user"></span> Sign Up</a></li>
+                    <li class="dropdown logged_in" id="user_menu">
+                        <a class="dropdown-toggle" data-toggle="dropdown" href="#"><span class="glyphicon glyphicon-user"></span><div id="user"></div><span class="caret"></span></a>
+                            <ul class="dropdown-menu">
+                                <li><a href="#" id="logout_button">Sign Out</a></li>
+                                <li><a href="#">Account</a></li>
+                            </ul>
+                    </li>
+                    <li class="logged_out"><a href="#" id="login_button" data-toggle="modal" data-target="#SignInModal"><span class="glyphicon glyphicon-log-in"></span>Sign In</a></li>
+                </ul>
             </div>
+        </nav>
+        
+        
+        <div class="jumbotron text-center">
+            <h1> Welcome to the 314 Foos Ball Tournament Ladder! </h1>
+            <h2 id="whoslogged"></h2>
+            <p class="logged_out"> Please sign in or sign up to see the full ladder. </p>
         </div>
-    </div>
-</body>
+        
+        
+        <div class="container logged_in" id="full_ladder" hidden>
+            <h2> Click on a row to issue a challenge! </h2>
+            <p> Remember: You can only challenge people who are ranked above you up to three ranks. </p>
+            <table class="table table-hover table-striped table-bordered">
+                <thead>
+                    <tr> <th>Rank</th> <th>Firstname</th> <th>Lastname</th> </tr>
+                </thead>
+                <tbody>
+                    <tr> <td>1</td> <td>John</td> <td>Doe</td> </tr>
+                    <tr> <td>2</td> <td>Mary</td> <td>Moe</td> </tr>
+                    <tr> <td>3</td> <td>July</td> <td>Dooley</td> </tr>
+                </tbody>
+            </table>
+        </div>
 
 
+        <div id="SignInModal" class="modal" tabindex="-1" role="dialog">
+            <form name="SignInForm" >
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Sign In</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true"></span></button>
+                        </div>
+                        <div class="modal-body">
+                            Username: <input type="text" name="username"></input>
+                            <br />
+                            Password:<input type="password" name="password"></input>
+                        </div>
+                        <div class="modal-footer">
+                            <button id="login_submit" type="button" class="btn btn-primary" value="Submit" onclick="return false;" data-dismiss="modal">Submit</button>
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+        
+        <div id="SignUpModal" class="modal" tabindex="-1" role="dialog">
+            <form name="SignUpForm" >
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Sign Up</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true"></span></button>
+                        </div>
+                        <div class="modal-body">
+                            Username: <input type="text" name="username"></input>
+                            <br />
+                            Password:<input type="password" name="password"></input>
+                        </div>
+                        <div class="modal-footer">
+                            <button id="signup_submit" type="submit" class="btn btn-primary" value="Submit">Submit</button>
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        
+
+
+    </body>
+    
+    
 </html>

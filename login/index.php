@@ -10,9 +10,9 @@ $request = new RestRequest();
 $vars = $request->getRequestVariables();
 
 //connect to the database
-//$db = new PDO("pgsql:dbname=ladder host=localhost password=314dev user=dev");
+$db = new PDO("pgsql:dbname=ladder host=localhost password=314dev user=dev");
 //XXX uncomment above and comment out below for dev environment
-$db = new PDO("pgsql:dbname=wh_ladder host=localhost password=1392922 user=whiscox09");
+//$db = new PDO("pgsql:dbname=wh_ladder host=localhost password=1392922 user=whiscox09");
 
 $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
@@ -35,21 +35,24 @@ if($request->isGet()) {
 //create
 elseif($request->isPost()) {
     //make sure a username and password are entered
-    exit_on_failure(vars_is_set(["username"], $_POST), "USERNAME IS MISSING!");
-    exit_on_failure(vars_is_set(["password"], $_POST), "NO PASSWORD ENTERED!");
-    
+    exit_on_failure(vars_is_set(["username"], $vars), "USERNAME IS MISSING!");
+    exit_on_failure(vars_is_set(["password"], $vars), "NO PASSWORD ENTERED!");
+   
     //Get parameters
-    $username = $_POST["username"];
-    $password = password_hash($_POST["password"], PASSWORD_DEFAULT);
+    $username = $vars["username"];
+    $password = $vars["password"];
+
+    exit_on_failure(player_exists($username, $db), "PLAYER $username DOES NOT EXIST!");
+
     $valid_login = execute_sql_query("SELECT password FROM player WHERE username = ?;", [$username], $db)[0]["password"];
 
     //check login for correct credentials
-    if ($password == $valid_login)
+    if (password_verify($password, $valid_login))
     {
         //if correct
             //Create a new session
             session_start();
-            $_SESSION["username"] = $_POST["username"];
+            $_SESSION["username"] = $vars["username"];
             http_response_code (200);
             $results["error_text"] = "";
     }
@@ -66,6 +69,7 @@ elseif($request->isDelete()) {
     session_start();
     session_unset();
     session_destroy();
+    http_response_code (200);
 }
 
 echo(json_encode($results));
