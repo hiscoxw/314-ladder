@@ -16,6 +16,8 @@ $db = new PDO("pgsql:dbname=wh_ladder host=localhost password=1392922 user=whisc
 
 $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
+session_start();
+
 if(isset($_SESSION["username"]))
 {
     //view

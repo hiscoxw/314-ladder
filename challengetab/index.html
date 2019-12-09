@@ -22,48 +22,24 @@
         
             $(function()
             {
+                var data = sessionStorage.getItem("username");
                 var TableBody = $("#LoggedInTableBody");
-                var ladderTable;
-
-                //Send a get request to populate the ladder (LoggedInTableBody)
-                $.ajax({
-                    type: "GET",
-                    url: "ladder/",
-                    success: function(data) {
-                        ladderTable = JSON.parse(data);
-                        
-                        $.each(ladderTable, function(i, tableRow) {
-                            
-                            TableBody.append("<tr data-rank=" + tableRow.rank + " data-username=" + tableRow.username + "><td>" + tableRow.rank + "</td><td>" + tableRow.username + "</td><td>" + tableRow.name + "</td><tr>");
-                        });
-                    }
-                });
-
+                
+                
                 //Send a get request to the server to see if anyone is logged in
                 //If they are, save their username in sessionStorage and show elements for logged in status
                 //Else, clear the sessionStorage, hide logged in elements, and show logged out elements
                 $.ajax({
                     type: "GET",
-                    url: "login/",
+                    url: "../login/",
                     success: function(data) {
                         sessionStorage.setItem("username", JSON.parse(data)["username"]);
                         var user = document.getElementById("user");
 
                         user.innerHTML = JSON.parse(data)["username"];
-
-                                                
+                        
                         $(".logged_in").show();
                         $(".logged_out").hide();
-
-                        $.ajax({
-                            type:"GET",
-                            url:"player/",
-                            data: {"username":sessionStorage.getItem("username")},
-                            success: function(info) {
-                                sessionStorage.setItem("userInfo", info);
-                            }
-                        });
-
                     },
                     error: function() {
                         
@@ -73,31 +49,37 @@
                         $(".logged_out").show();
                     }
                 });
+                
+                //Populate the challenges table (LoggedInTableBody) 
+                $.ajax({
+                    type: "GET",
+                    url: "../challenge/",
+                    data: {"player":data},
+                    success: function(returnValue) {
+                        var challengeTable = JSON.parse(returnValue).challenges;
+
+                        $.each(challengeTable, function(i, tableRow) {
+
+                            TableBody.append("<tr><td>" + tableRow.challenger + "</td><td>" + tableRow.challengee + "</td><td>" + 
+                                tableRow.issued + "</td><td>" + tableRow.accepted + "</td><td>" + tableRow.scheduled + "</td></tr>");
+                        });
+                    },
+                });
+
+                //Set the event handlers for the buttons
 
                 TableBody.delegate("tr", "click", function(){
-                    var currentRank = JSON.parse(sessionStorage.userInfo)["rank"];
-                    var challengeeRank = $(this).attr("data-rank");
-
-                    if(challengeeRank < currentRank && challengeeRank >= currentRank - 3)
-                    {
-                        
-                        $("#NewChallengeModal").toggle();
-                        $("#challenger").val(sessionStorage.username);
-                        $("#challengee").val($(this).attr("data-username"));
-                    }
-                    else
-                    {
-                        alert("This is not a valid challengee!");
-                    }
+                    $("#ChallengeEditModal").toggle();
                 });
-                
+
+                //Submit button for login
                 $("#login_submit").click(function(){
-                    var data = get_login_form_data(document.forms.SignInForm);
+                    var $data = get_login_form_data(document.forms.SignInForm);
 
                     $.ajax({
-                        url:"login/",
+                        url:"../login/",
                         type:"POST",
-                        data: data,
+                        data: $data,
                         success: function(data) {
                             location.reload();
                         },
@@ -107,24 +89,26 @@
                     });
                 });
                 
+                //Sign Out button
                 $("#logout_button").click(function(){
                     $.ajax({
-                        url:"login/",
+                        url:"../login/",
                         type: "delete",
                         success: function () {
                             sessionStorage.clear();
-                            location.reload();
+                            window.location.replace("..");
                         }
                     });
                 });
 
+                //Submit Button For Sign In Form
                 $("#signup_submit").click(function(){
                     
                         if (document.forms.SignUpForm.password.value == document.forms.SignUpForm.password_confirm.value)
                         {
                             var data = get_signup_form_data(document.forms.SignUpForm);
                             $.ajax({
-                                url:"player/",
+                                url:"../player/",
                                 type:"POST",
                                 data:data,
                                 success: function() {
@@ -147,7 +131,7 @@
                     var data = JSON.stringify(sessionStorage);
 
                     $.ajax({
-                        url: "player/",
+                        url: "../player/",
                         type: "delete",
                         data: data,
                         success: function () {
@@ -169,11 +153,11 @@
         <nav class="navbar navbar-inverse">
             <div class="container-fluid">
                 <div class="navbar-header">
-                    <a class="navbar-brand" href=".">CSIS 314 Foos Ball Ladder</a>
+                    <a class="navbar-brand" href="..">CSIS 314 Foos Ball Ladder</a>
                 </div>
                 <ul class="nav navbar-nav">
-                    <li class="active"><a href=".">Ladder</a></li>
-                    <li class="logged_in"><a href="challengetab/" id="challenges_tab">My Challenges</a></li>
+                    <li ><a href="..">Ladder</a></li>
+                    <li class="logged_in active"><a href="challengetab/" id="challenges_tab">My Challenges</a></li>
                 </ul>
                 <ul class="nav navbar-nav navbar-right">
                     <li class="logged_out"><a href="#" id="signup_button" data-toggle="modal" data-target="#SignUpModal"><span class="glyphicon glyphicon-user"></span> Sign Up</a></li>
@@ -191,18 +175,12 @@
         </nav>
         
         
-        <div class="jumbotron text-center">
-            <h1> Welcome to the 314 Foos Ball Tournament Ladder! </h1>
-            <p class="logged_out"> Please sign in or sign up to see the full ladder. </p>
-        </div>
-        
-        
-        <div class="container logged_in" id="full_ladder" hidden>
-            <h3>Click on a row to issue a challenge!</h3>
-            <p>Remember: You can only challenge someone ranked up to three ranks above you.</p>
+        <div class="container logged_in" id="challenge_table" hidden>
+            <h2> My Challenges </h2>
+            <p> Click on a challenge to edit. </p>
             <table class="table table-hover table-striped table-bordered scrollable">
                 <thead>
-                    <tr> <th>Rank</th> <th>Username</th> <th>Name</th> </tr>
+                    <tr> <th>Challenger</th> <th>Challengee</th> <th>Issued</th><th>Accepted</th><th>Scheduled</th> </tr>
                 </thead>
                 <tbody id="LoggedInTableBody">
                 </tbody>
@@ -211,7 +189,7 @@
 
 
         <div id="SignInModal" class="modal" tabindex="-1" role="dialog">
-            <form name="SignInForm" class="form-horizontal">
+            <form name="SignInForm" >
                 <div class="modal-dialog" role="document">
                     <div class="modal-content">
                         <div class="modal-header">
@@ -234,7 +212,7 @@
         
 
         <div id="SignUpModal" class="modal" tabindex="-1" role="dialog">
-            <form name="SignUpForm" class="form-horizontal">
+            <form name="SignUpForm" >
                 <div class="modal-dialog" role="document">
                     <div class="modal-content">
                         <div class="modal-header">
@@ -262,9 +240,8 @@
                 </div>
             </form>
         </div>
-
-
-        <div id="NewChallengeModal" class="modal" tabindex="-1" role="dialog">
+        
+        <div id="ChallengeEditModal" class="modal" tabindex="-1" role="dialog">
             <form name="NewChallengeForm" class="form-horizontal">
                 <div class="modal-dialog" role="document">
                     <div class="modal-content">
@@ -279,7 +256,7 @@
                         </div>
                         <div class="modal-footer">
                             <button id="challenge_submit" type="submit" class="btn btn-primary" value="Submit" data-dismiss="modal">Submit</button>
-                            <button type="button" class="btn btn-secondary" data-dismiss="modal" data-target="NewChallengeModal">Cancel</button>
+                            <button type="close" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
                         </div>
                     </div>
                 </div>
