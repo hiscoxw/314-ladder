@@ -57,20 +57,17 @@
                     }
                 });
                 
-                //Populate the challenges table (LoggedInTableBody) 
+                //Populate the matches table
                 $.ajax({
                     type: "GET",
-                    url: "../challenge/",
-                    data: {"player":data},
+                    url: "../match/",
+                    data: {"username":data},
                     success: function(returnValue) {
-                        var challengeTable = JSON.parse(returnValue).challenges;
+                        var matchTable = JSON.parse(returnValue);
 
-                        $.each(challengeTable, function(i, tableRow) {
-                            
-                            TableBody.append("<tr data-challenger=" + tableRow.challenger + " data-challengee=" + tableRow.challengee + " data-issued=" +
-                                tableRow.issued + " data-accepted=" + tableRow.accepted + " data-scheduled='" + tableRow.scheduled + "'><td>" +
-                                tableRow.challenger + "</td><td>" + tableRow.challengee + "</td><td>" + tableRow.issued + "</td><td>" + tableRow.accepted +
-                                "</td><td>" + tableRow.scheduled + "</td></tr>");
+                        $.each(matchTable, function(i, tableRow) {
+                            TableBody.append("<tr><td>" + tableRow.played + "</td><td>" + tableRow.number + "</td><td>" + tableRow.winner  + "</td><td>" +
+                                tableRow.loser + "</td><td>" + tableRow.winner_score + "</td><td>" + tableRow.loser_score + "</td></tr>");
                         });
                     },
                 });
@@ -79,11 +76,7 @@
                 
                 //Any Table Row
                 TableBody.delegate("tr", "click", function(){
-                    $("#ChallengeEditModal").modal();
-                    $("#challenger").val($(this).attr("data-challenger"));
-                    $("#challengee").val($(this).attr("data-challengee"));
-                    $("#scheduled").val($(this).attr("data-scheduled"));
-                    $("#accepted").val($(this).attr("data-accepted"));
+                    $("#MatchEditModal").modal();
                 });
 
                 //Accept Challenge
@@ -199,8 +192,8 @@
                 </div>
                 <ul class="nav navbar-nav">
                     <li ><a href="..">Ladder</a></li>
-                    <li class="logged_in active"><a href="challengetab/" id="challenges_tab">My Challenges</a></li>
-                    <li class="logged_in"><a href="../matchtab/" id="matches_tab">My Match History</a></li>
+                    <li class="logged_in"><a href="../challengetab/" id="challenges_tab">My Challenges</a></li>
+                    <li class="logged_in active"><a href="matchtab/" id="matches_tab">My Match History</a></li>
                 </ul>
                 <ul class="nav navbar-nav navbar-right">
                     <li class="dropdown logged_in" id="user_menu">
@@ -217,20 +210,21 @@
         
         
         <div class="container logged_in" id="challenge_table" hidden>
-            <h2> My Challenges </h2>
-            <p> Click on a challenge to edit. </p>
+            <h2> My Games </h2>
+            <p> Click on a game to delete the corresponding match.</p>
             <table class="table table-hover table-striped table-bordered scrollable">
                 <thead>
-                    <tr> <th>Challenger</th> <th>Challengee</th> <th>Issued</th><th>Accepted</th><th>Scheduled</th> </tr>
+                    <tr> <th>Date Played</th> <th>Game #</th> <th>Winner</th><th>Loser</th><th>Winner Score</th><th>Loser Score</th></tr>
                 </thead>
                 <tbody id="LoggedInTableBody">
                 </tbody>
             </table>
+            <button type="button" class="btn btn-primary" id="report_scores"> Report New Match Scores </button>
         </div>
 
 
-        <div id="ChallengeEditModal" class="modal" tabindex="-1" role="dialog">
-            <form name="ChallengeEditForm" class="form-horizontal">
+        <div id="MatchEditModal" class="modal" tabindex="-1" role="dialog">
+            <form name="MatchEditForm" class="form-horizontal">
                 <div class="modal-dialog" role="document">
                     <div class="modal-content">
                         <div class="modal-header">
@@ -238,14 +232,33 @@
                             <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true"></span></button>
                         </div>
                         <div class="modal-body">
-                            <label for="challenger">Challenger: </label><input type="text" id="challenger" readonly></input><br/>
-                            <label for="challengee">Challengee: </label><input type="text" id="challengee" readonly></input><br/>
-                            <label for="scheduled">When:        </label><input type="datetime" id="scheduled"></input><br/>
+                            <p>"Would you like to delete this match?"</p>
                         </div>
                         <div class="modal-footer">
-                            <button id="challenge_submit" type="submit" class="btn btn-primary" value="Submit" data-dismiss="modal">Submit Changes</button>
-                            <button id="challenge_accept" type="submit" class="btn btn-primary" value="Accept" data-dismiss="modal">Accept Challenge!</button>
-                            <button id="challenge_dismiss" type="submit" class="btn btn-primary" value="Dismiss" data-dismiss="modal">Dismiss Challenge</button>
+                            <button id="delete_match" type="submit" class="btn btn-primary" value="Delete" data-dismiss="modal">Delete Match</button>
+                            <button type="close" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <div id="ReportScoresMpdal" class="modal" tabindex="-1" role="dialog">
+            <form name="ReportScoresForm" class="form-horizontal">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Edit Challenge</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true"></span></button>
+                        </div>
+                        <div class="modal-body">
+                            <p>"Please enter the match information below:"</p>
+                            <h5>Game 1</h5>
+                            <h5>Game 2</h5>
+                            <h5>Game 3</h5>
+                        </div>
+                        <div class="modal-footer">
+                            <button id="delete_match" type="submit" class="btn btn-primary" value="Delete" data-dismiss="modal">Delete Match</button>
                             <button type="close" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
                         </div>
                     </div>

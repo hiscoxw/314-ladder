@@ -3,19 +3,6 @@
 require_once "../rest.php";
 require_once "../lib.php";
 
-//make an object to process REST requests
-$request = new RestRequest();
-
-//get the request variables
-$vars = $request->getRequestVariables();
-
-//connect to the database
-//$db = new PDO("pgsql:dbname=ladder host=localhost password=314dev user=dev");
-//XXX uncomment above and comment out below for dev environment
-$db = new PDO("pgsql:dbname=wh_ladder host=localhost password=1392922 user=whiscox09");
-
-$db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-
 session_start();
 
 if(isset($_SESSION["username"]))
@@ -148,8 +135,8 @@ if(isset($_SESSION["username"]))
             exit_on_failure(validate_date_time($accepted), "$accepted IS NOT A VALID DATETIME FORMAT FOR SCHEDULED!");
         
             //Set accepted
-            $sql = "UPDATE challenge SET accepted = ? WHERE challenger = ? AND challengee = ?;";
-            execute_sql_query($sql, [$accepted, $challenger, $challengee], $db);
+            $sql = "UPDATE challenge SET accepted = ? WHERE challenger = ? AND challengee = ? AND scheduled = ?;";
+            execute_sql_query($sql, [$accepted, $challenger, $challengee, $scheduled], $db);
 
             //Delete outstanding challenges for both challenger and challengee
             $sql = "DELETE FROM challenge WHERE challenger = ? AND accepted IS NULL;";

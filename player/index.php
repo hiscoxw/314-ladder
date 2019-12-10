@@ -3,19 +3,6 @@
 require_once "../rest.php";
 require_once "../lib.php";
 
-//make an object to process REST requests
-$request = new RestRequest();
-
-//get the request variables
-$vars = $request->getRequestVariables();
-
-//connect to the database
-//$db = new PDO("pgsql:dbname=ladder host=localhost password=314dev user=dev");
-//XXX uncomment above and comment out below for dev environment
-$db = new PDO("pgsql:dbname=wh_ladder host=localhost password=1392922 user=whiscox09");
-
-$db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-
 //view
 if($request->isGet()) {
    

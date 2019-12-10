@@ -1,5 +1,19 @@
 <?php
 
+require_once "rest.php";
+
+//make an object to process REST requests
+$request = new RestRequest();
+
+//get the request variables
+$vars = $request->getRequestVariables();
+
+//connect to the database
+$db = new PDO("pgsql:dbname=ladder host=localhost password=314dev user=dev");
+//XXX uncomment above and comment out below for dev environment
+//$db = new PDO("pgsql:dbname=wh_ladder host=localhost password=1392922 user=whiscox09");
+$db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
 /**
 * Exits the program based on the results of a test that is passed in.
 *
@@ -199,7 +213,7 @@ function validate_email($email)
 */
 function validate_date_time($date)
 {
-    $regex = '^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}^';
+    $regex = '^[0-9]{4}-[0-9]{1,2}-[0-9]{1,2} [0-9]{1,2}:[0-9]{1,2}:[0-9]{1,2}^';
 
     return preg_match($regex, $date);
 }

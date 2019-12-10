@@ -19,6 +19,12 @@
                 var data = {name:form.name.value, email:form.email.value, phone:form.phone.value, username:form.username.value, password:form.password.value};
                 return JSON.stringify(data);
             }
+
+            function get_new_challenge_form_data(form)
+            {
+                var data = {challenger:form.challenger.value, challengee:form.challengee.value, scheduled:form.scheduled.value};
+                return JSON.stringify(data);
+            }
         
             $(function()
             {
@@ -34,7 +40,8 @@
                         
                         $.each(ladderTable, function(i, tableRow) {
                             
-                            TableBody.append("<tr data-rank=" + tableRow.rank + " data-username=" + tableRow.username + "><td>" + tableRow.rank + "</td><td>" + tableRow.username + "</td><td>" + tableRow.name + "</td><tr>");
+                            TableBody.append("<tr data-toggle='modal' data-target='NewChallengeModal' data-rank=" + tableRow.rank + " data-username=" + tableRow.username + "><td>" + tableRow.rank +
+                                "</td><td>" + tableRow.username + "</td><td>" + tableRow.name + "</td><tr>");
                         });
                     }
                 });
@@ -81,7 +88,7 @@
                     if(challengeeRank < currentRank && challengeeRank >= currentRank - 3)
                     {
                         
-                        $("#NewChallengeModal").toggle();
+                        $("#NewChallengeModal").modal();
                         $("#challenger").val(sessionStorage.username);
                         $("#challengee").val($(this).attr("data-username"));
                     }
@@ -89,6 +96,24 @@
                     {
                         alert("This is not a valid challengee!");
                     }
+                });
+
+                $("#challenge_submit").click(function(){
+                    //Get data from the form
+                    var data =get_new_challenge_form_data(document.forms.NewChallengeForm);
+                    
+                    //Execute an ajax call to add a challenge
+                    $.ajax({
+                        url: "challenge/",
+                        type: "POST",
+                        data: data,
+                        success: function(data) {
+                            alert("Successfully issued challenge!");
+                        },
+                        error: function(data) {
+                            alert("Error submitting challenge!");
+                        }
+                    });
                 });
                 
                 $("#login_submit").click(function(){
@@ -174,6 +199,7 @@
                 <ul class="nav navbar-nav">
                     <li class="active"><a href=".">Ladder</a></li>
                     <li class="logged_in"><a href="challengetab/" id="challenges_tab">My Challenges</a></li>
+                    <li class="logged_in"><a href="matchtab/" id="matches_tab">My Match History</a></li>
                 </ul>
                 <ul class="nav navbar-nav navbar-right">
                     <li class="logged_out"><a href="#" id="signup_button" data-toggle="modal" data-target="#SignUpModal"><span class="glyphicon glyphicon-user"></span> Sign Up</a></li>
@@ -275,7 +301,7 @@
                         <div class="modal-body">
                             <label for="challenger">Challenger: </label><input type="text" id="challenger" readonly></input><br/>
                             <label for="challengee">Challengee: </label><input type="text" id="challengee" readonly></input><br/>
-                            <label for="scheduled">When: </label><input type="datetime" placeholder="YYYY/MM/DD hh:mm:ss" id="scheduled"></input><br/>
+                            <label for="scheduled">When: </label><input type="datetime" placeholder="YYYY-MM-DD hh:mm:ss" id="scheduled"></input><br/>
                         </div>
                         <div class="modal-footer">
                             <button id="challenge_submit" type="submit" class="btn btn-primary" value="Submit" data-dismiss="modal">Submit</button>

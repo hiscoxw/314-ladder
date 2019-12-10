@@ -3,23 +3,10 @@
 require_once "../rest.php";
 require_once "../lib.php";
 
-//make an object to process REST requests
-$request = new RestRequest();
-
-//get the request variables
-$vars = $request->getRequestVariables();
-
-//connect to the database
-//$db = new PDO("pgsql:dbname=ladder host=localhost password=314dev user=dev");
-//XXX uncomment above and comment out below for dev environment
-$db = new PDO("pgsql:dbname=wh_ladder host=localhost password=1392922 user=whiscox09");
-
-$db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-
+session_start();
 
 //view
 if($request->isGet()) {
-    session_start();
     if(isset($_SESSION["username"]))
     {
         $results["username"] = $_SESSION["username"];
@@ -51,7 +38,6 @@ elseif($request->isPost()) {
     {
         //if correct
             //Create a new session
-            session_start();
             $_SESSION["username"] = $vars["username"];
             http_response_code (200);
             $results["error_text"] = "";
@@ -66,7 +52,6 @@ elseif($request->isPost()) {
 
 //delete
 elseif($request->isDelete()) {
-    session_start();
     session_unset();
     session_destroy();
     http_response_code (200);
